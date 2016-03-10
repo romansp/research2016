@@ -173,7 +173,7 @@ namespace System
 		{
 			if (_numerator == 0) return "0";
 			if (_denominator == 1) return _numerator.ToString();
-			return _numerator.ToString() + "/" + _denominator.ToString() + " " + (double)this;
+			return _numerator.ToString() + "/" + _denominator.ToString();
 		}
 	}
 }
