@@ -129,6 +129,7 @@ namespace Solution3
 
         private static void WriteReport(Dictionary<int, WareSalesStats> salesData)
         {
+            var bag = new ConcurrentBag<string>();
             var reportLines = new List<string>() { ReportHeader };
             foreach (var salesInfo in salesData.OrderByDescending(c => c.Value.Mean))
             {
@@ -146,6 +147,10 @@ namespace Solution3
 
         private static Dictionary<int, WareSalesStats> BuildSalesData(IDictionary<int, string> wares)
         {
+            // todo: producer - consumer pattern
+            // producer: bulk read file lines and place strings into ConcurrentBag
+            // consumer: read files from ConcurrentBag in while(!bag.IsCompleted) loop
+
             var dispatches = File.ReadLines(DispatchesFile);
             var isHeaderLine = true;
             int wareIdIndex = 0;
