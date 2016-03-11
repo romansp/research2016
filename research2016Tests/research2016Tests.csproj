@@ -6,8 +6,8 @@
     <ProjectGuid>{91BE2099-93B3-4AFE-BB29-A1838CEA76B6}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>SKB_KonturTests</RootNamespace>
-    <AssemblyName>SKB_KonturTests</AssemblyName>
+    <RootNamespace>research2016Tests</RootNamespace>
+    <AssemblyName>research2016Tests</AssemblyName>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <ProjectTypeGuids>{3AC096D0-A1C2-E12C-1390-A8335801FDAB};{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids>
@@ -73,9 +73,9 @@
     <Otherwise />
   </Choose>
   <ItemGroup>
-    <Compile Include="Performance\Solution3Tests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Solution1Tests.cs" />
+    <Compile Include="Solution3Tests.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Solution1\Solution1.csproj">

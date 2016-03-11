@@ -1,18 +1,15 @@
-﻿using Solution3;
-using System;
-using System.Collections.Concurrent;
+﻿using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 
 namespace Solution3
 {
     public static class StringSplits
     {
-        // to avoid boxing
+        // to avoid boxing in string.Split()
         public static readonly char[] Comma = { ',' };
     }
 
@@ -30,83 +27,67 @@ namespace Solution3
         public static readonly string end_time = "end_time";
     }
 
-    public class Program
+	public class WareSalesStats
+	{
+		private double _oldM, _newM, _oldS, _newS;
+		private long _salesTotal;
+		private double _max;
+
+		public int WareId { get; set; }
+		public string WareName { get; set; }
+
+		public long SalesTotal
+		{
+			get { return _salesTotal; }
+		}
+
+		public double Max
+		{
+			get { return _max; }
+		}
+
+		public double Mean
+		{
+			get { return SalesTotal > 0 ? _newM : 0.0; }
+		}
+
+		public double Variance
+		{
+			get { return SalesTotal > 1 ? _newS / (SalesTotal - 1) : 0.0; }
+		}
+
+		public double Deviation
+		{
+			get { return Math.Sqrt(Variance); }
+		}
+
+		public void AddSale(double statValue)
+		{
+			_salesTotal++;
+			if (SalesTotal == 1)
+			{
+				_oldM = _newM = statValue;
+				_oldS = 0.0;
+				_max = statValue;
+			}
+			else
+			{
+				_newM = _oldM + (statValue - _oldM) / SalesTotal;
+				_newS = _oldS + (statValue - _oldM) * (statValue - _newM);
+
+				_oldM = _newM;
+				_oldS = _newS;
+
+				if (statValue > Max)
+				{
+					_max = statValue;
+				}
+			}
+		}
+	}
+
+	public class Program
     {
-        public class SalesData
-        {
-            public int WareId { get; set; }
-            public string WareName { get; set; }
-            public DateTime StartTime { get; set; }
-            public DateTime EndTime { get; set; }
-        }
-
-        public class WareSalesStats
-        {
-            private double _oldM, _newM, _oldS, _newS, _max;
-            private long _salesTotal;
-
-            public int WareId { get; set; }
-            public string WareName { get; set; }
-
-            public long SalesTotal { get { return _salesTotal; } }
-
-            public double Max
-            {
-                get
-                {
-                    return _max;
-                }
-            }
-
-            public double Mean
-            {
-                get
-                {
-                    return (SalesTotal > 0) ? _newM : 0.0;
-                }
-            }
-
-            public double Variance
-            {
-                get
-                {
-                    return ((SalesTotal > 1) ? _newS / (SalesTotal - 1) : 0.0);
-                }
-            }
-
-            public double Deviation
-            {
-                get
-                {
-                    return Math.Sqrt(Variance);
-                }
-            }            
-            
-            public void AddSale(double statValue)
-            {
-                _salesTotal++;
-                if (_salesTotal == 1)
-                {
-                    _oldM = _newM = statValue;
-                    _oldS = 0.0;
-                    _max = statValue;
-                }
-                else
-                {
-                    _newM = _oldM + (statValue - _oldM) / _salesTotal;
-                    _newS = _oldS + (statValue - _oldM) * (statValue - _newM);
-
-                    _oldM = _newM;
-                    _oldS = _newS;
-
-                    if (statValue > _max)
-                    {
-                        _max = statValue;
-                    }
-                }
-            }
-        }
-
         private const string DispatchesFile = "dispatches.txt";
         private const string WaresFile = "wares.txt";
         private const string ReportFile = "report.txt";
@@ -129,8 +110,7 @@ namespace Solution3
 
         private static void WriteReport(Dictionary<int, WareSalesStats> salesData)
         {
-            var bag = new ConcurrentBag<string>();
-            var reportLines = new List<string>() { ReportHeader };
+            var reportLines = new List<string> { ReportHeader };
             foreach (var salesInfo in salesData.OrderByDescending(c => c.Value.Mean))
             {
                 var value = salesInfo.Value;
@@ -150,79 +130,83 @@ namespace Solution3
             // todo: producer - consumer pattern
             // producer: bulk read file lines and place strings into ConcurrentBag
             // consumer: read files from ConcurrentBag in while(!bag.IsCompleted) loop
-
-            var dispatches = File.ReadLines(DispatchesFile);
+			
             var isHeaderLine = true;
-            int wareIdIndex = 0;
-            int startTimeIndex = 0;
-            int endTimeIndex = 0;
+            var wareIdIndex = 1;
+            var startTimeIndex = 2;
+            var endTimeIndex = 3;
 
             var salesData = new Dictionary<int, WareSalesStats>();
-            foreach (var dispatchLine in dispatches)
-            {
-                if (isHeaderLine)
-                {
-                    isHeaderLine = false;
-                    var headerColumns = dispatchLine.Split(StringSplits.Comma);
 
-                    // trust template
-                    if (headerColumns.Length == 4
-                        && string.Equals(headerColumns[1], DispatchesFileColumns.ware_id, StringComparison.OrdinalIgnoreCase)
-                        && string.Equals(headerColumns[2], DispatchesFileColumns.start_time, StringComparison.OrdinalIgnoreCase))
-                    {
-                        wareIdIndex = 1;
-                        startTimeIndex = 2;
-                        endTimeIndex = 3;
-                    }
-                    else
-                    {
-                        // columns are not in template order
-                        for (int i = 0; i < headerColumns.Length; i++)
-                        {
-                            if (string.Equals(headerColumns[i], DispatchesFileColumns.ware_id, StringComparison.OrdinalIgnoreCase))
-                            {
-                                wareIdIndex = i;
-                            }
-                            else if (string.Equals(headerColumns[i], DispatchesFileColumns.start_time, StringComparison.OrdinalIgnoreCase))
-                            {
-                                startTimeIndex = i;
-                            }
-                            else if (string.Equals(headerColumns[i], DispatchesFileColumns.end_time, StringComparison.OrdinalIgnoreCase))
-                            {
-                                endTimeIndex = i;
-                            }
-                        }
-                    }
-                }
-                else
-                {
-                    var dispatchValues = dispatchLine.Split(StringSplits.Comma);
-                    var wareId = int.Parse(dispatchValues[wareIdIndex]);
-                    var dispatchStartTime = dispatchValues[startTimeIndex];
-                    var dispatchEndTime = dispatchValues[endTimeIndex];
+			//var dispatches = File.ReadLines(DispatchesFile);
+			using (var fileStream = new FileStream(DispatchesFile, FileMode.Open, FileAccess.Read, FileShare.Read, 4096, FileOptions.SequentialScan))
+			using (var streamReader = new StreamReader(fileStream, Encoding.UTF8))
+			{ 
+				string dispatchLine;
+				while ((dispatchLine = streamReader.ReadLine()) != null)
+				{
+					if (isHeaderLine)
+					{
+						isHeaderLine = false;
+						var headerColumns = dispatchLine.Split(StringSplits.Comma);
 
-                    string wareName;
-                    WareSalesStats wareSales;
-                    if (wares.TryGetValue(wareId, out wareName))
-                    {
-                        if (!salesData.TryGetValue(wareId, out wareSales))
-                        {
-                            wareSales = new WareSalesStats
-                            {
-                                WareId = wareId,
-                                WareName = wareName
-                            };
-                            salesData.Add(wareId, wareSales);
-                        }
+						if (headerColumns.Length == 4 &&
+							string.Equals(headerColumns[1], DispatchesFileColumns.ware_id, StringComparison.OrdinalIgnoreCase) &&
+							string.Equals(headerColumns[2], DispatchesFileColumns.start_time,
+								StringComparison.OrdinalIgnoreCase))
+						{
+							// trust template
+							continue;
+						}
+						// columns are not in template order
+						for (var i = 0; i < headerColumns.Length; i++)
+						{
+							if (string.Equals(headerColumns[i], DispatchesFileColumns.ware_id, StringComparison.OrdinalIgnoreCase))
+							{
+								wareIdIndex = i;
+							}
+							else if (string.Equals(headerColumns[i], DispatchesFileColumns.start_time,
+								StringComparison.OrdinalIgnoreCase))
+							{
+								startTimeIndex = i;
+							}
+							else if (string.Equals(headerColumns[i], DispatchesFileColumns.end_time,
+								StringComparison.OrdinalIgnoreCase))
+							{
+								endTimeIndex = i;
+							}
+						}
+					}
+					else
+					{
+						var dispatchValues = dispatchLine.Split(StringSplits.Comma);
+						var wareId = ParseIntFast(dispatchValues[wareIdIndex]);
 
-                        var startTime = DateTime.ParseExact(dispatchStartTime, DateFormat, CultureInfo.InvariantCulture);
-                        var endTime = DateTime.ParseExact(dispatchEndTime, DateFormat, CultureInfo.InvariantCulture);
+						string wareName;
+						if (wares.TryGetValue(wareId, out wareName))
+						{
+							WareSalesStats wareSales;
+							if (!salesData.TryGetValue(wareId, out wareSales))
+							{
+								wareSales = new WareSalesStats
+								{
+									WareId = wareId,
+									WareName = wareName
+								};
+								salesData.Add(wareId, wareSales);
+							}
 
-                        var timeToProcess = (endTime - startTime).TotalSeconds;
-                        wareSales.AddSale(timeToProcess);
-                    }
-                }
-            }
+							var dispatchStartTime = dispatchValues[startTimeIndex];
+							var dispatchEndTime = dispatchValues[endTimeIndex];
+							var startTime = ParseDateTimeFast(dispatchStartTime, DateFormat);
+							var endTime = ParseDateTimeFast(dispatchEndTime, DateFormat);
+
+							var timeToProcess = (endTime - startTime).TotalMinutes;
+							wareSales.AddSale(timeToProcess);
+						}
+					}
+				}
+			}
             return salesData;
         }
 
@@ -231,41 +215,33 @@ namespace Solution3
             var waresFileLines = File.ReadAllLines(WaresFile);
             var headerColumns = waresFileLines[0].Split(StringSplits.Comma);
             int wareIdIndex = 0;
-            int wareNameIndex = 0;
+            int wareNameIndex = 1;
 
-            // trust template
-            if (headerColumns.Length == 2 &&
-                        string.Equals(headerColumns[0], WaresFileColumns.ware_id, StringComparison.OrdinalIgnoreCase))
-            {
-                wareIdIndex = 0;
-                wareNameIndex = 1;
-            }
-            else
-            {
-                // columns are not in template order
-                for (int i = 0; i < headerColumns.Length; i++)
-                {
-                    if (string.Equals(headerColumns[i], WaresFileColumns.ware_id, StringComparison.OrdinalIgnoreCase))
-                    {
-                        wareIdIndex = i;
-                    }
-                    else if (string.Equals(headerColumns[i], WaresFileColumns.ware_name, StringComparison.OrdinalIgnoreCase))
-                    {
-                        wareNameIndex = i;
-                    }
-                }
-            }
+	        if (headerColumns.Length != 2 || !string.Equals(headerColumns[0], WaresFileColumns.ware_id, StringComparison.OrdinalIgnoreCase))
+	        {
+		        // columns are not in template order
+		        for (int i = 0; i < headerColumns.Length; i++)
+		        {
+			        if (string.Equals(headerColumns[i], WaresFileColumns.ware_id, StringComparison.OrdinalIgnoreCase))
+			        {
+				        wareIdIndex = i;
+			        }
+			        else if (string.Equals(headerColumns[i], WaresFileColumns.ware_name, StringComparison.OrdinalIgnoreCase))
+			        {
+				        wareNameIndex = i;
+			        }
+		        }
+	        }
 
-            var wares = new ConcurrentDictionary<int, string>();
-            // skip header
-            Parallel.ForEach(waresFileLines.Skip(1), (waresFileLine) =>
-            {
-                var wareValues = waresFileLine.Split(StringSplits.Comma);
-                var wareId = int.Parse(wareValues[wareIdIndex]);
-                var wareName = wareValues[wareNameIndex];
-                wares.TryAdd(wareId, wareName);
-            });
-
+	        var wares = new Dictionary<int, string>();
+           	// skip header
+			for (int i = 1; i < waresFileLines.Length; i++)
+	        {
+				var wareValues = waresFileLines[i].Split(StringSplits.Comma);
+				var wareId = ParseIntFast(wareValues[wareIdIndex]);
+				var wareName = wareValues[wareNameIndex];
+				wares.Add(wareId, wareName);
+			}
             return wares;
         }
 
@@ -273,10 +249,10 @@ namespace Solution3
         {
             const string AllowedChars = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz#@$^*()      ";
             Random rng = new Random();
-            var lines = Enumerable.Range(0, 10000 /** 70*/).Select(index =>
-            {
-                return index + "," + RandomStrings(AllowedChars, 1, 16, 1, rng).First();
-            }).ToList();
+	        var lines =
+		        Enumerable.Range(0, 700000)
+			        .Select(index => index + "," + RandomStrings(AllowedChars, 1, 16, 1, rng).First())
+			        .ToList();
             lines.Shuffle();
             var columns = new[] { WaresFileColumns.ware_id, WaresFileColumns.ware_name };
             WriteCsv(WaresFile, columns, lines);
@@ -289,11 +265,11 @@ namespace Solution3
             var index = 0;
             foreach (var ware in wares)
             {
-                lines.AddRange(Enumerable.Range(0, rng.Next(50, 300)).Select(i =>
+                lines.AddRange(Enumerable.Range(0, rng.Next(0, 5)).Select(i =>
                 {
                     index++;
-                    var dateStart = new DateTime(2015, 1, 1).AddMilliseconds(rng.NextDouble() * 30 * 24 * 60 * 60 * 1000);
-                    var dateEnd = dateStart.AddMilliseconds(rng.NextDouble() * 10 * 30 * 24 * 60 * 60 * 1000);
+                    var dateStart = new DateTime(2015, 1, 1).AddMilliseconds(rng.NextDouble() * 30 * 24 * 60 * 60 * 10);
+                    var dateEnd = dateStart.AddMilliseconds(rng.NextDouble() * 10 * 30 * 24 * 60 * 60 * 10);
                     return string.Format("{0},{1},{2},{3}", index, ware.Key, dateStart.ToString(DateFormat), dateEnd.ToString(DateFormat));
                 }));
             }
@@ -302,7 +278,49 @@ namespace Solution3
             WriteCsv(DispatchesFile, columns, lines);
         }
 
-        private static int ParseIntFast(string s)
+		private static DateTime ParseDateTimeFast(string s, string dateFormat)
+		{
+			var year = 0;
+			var month = 0;
+			var day = 0;
+			var hour = 0;
+			var minute = 0;
+			var second = 0;
+			var millisecond = 0;
+
+			for (var i = 0; i < dateFormat.Length; i++)
+			{
+				var c = s[i];
+				switch (dateFormat[i])
+				{
+					case 'y':
+						year = year * 10 + (c - '0');
+						break;
+					case 'M':
+						month = month * 10 + (c - '0');
+						break;
+					case 'd':
+						day = day * 10 + (c - '0');
+						break;
+					case 'H':
+						hour = hour * 10 + (c - '0');
+						break;
+					case 'm':
+						minute = minute * 10 + (c - '0');
+						break;
+					case 's':
+						second = second * 10 + (c - '0');
+						break;
+					case 'f':
+						millisecond = millisecond * 10 + (c - '0');
+						break;
+				}
+			}
+
+			return new DateTime(year, month, day, hour, minute, second, millisecond);
+		}
+
+		private static int ParseIntFast(string s)
         {
             int y = 0;
             for (int i = 0; i < s.Length; i++)
@@ -312,10 +330,10 @@ namespace Solution3
             return y;
         }
 
-        private static void WriteCsv(string file, string[] columns, List<string> lines)
+        private static void WriteCsv(string file, string[] columns, IList<string> lines)
         {
             lines.Insert(0, string.Join(new string(StringSplits.Comma), columns));
-            File.WriteAllLines(file, lines);
+            File.WriteAllLines(file, lines, Encoding.UTF8);
         }
 
         private static IEnumerable<string> RandomStrings(
