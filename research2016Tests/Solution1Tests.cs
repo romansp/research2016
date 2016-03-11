@@ -48,6 +48,7 @@ namespace research2016Tests
 		[InlineData(2, 4, 1, 2)]
 		[InlineData(42, 2, 21, 1)]
 		[InlineData(0, 1, 0, 1)]
+		[InlineData(1, -2, -1, 2)]
 		[InlineData(int.MinValue, int.MinValue, 1, 1)]
 		[InlineData(int.MaxValue, int.MaxValue, 1, 1)]
 		[InlineData(int.MinValue, int.MaxValue, int.MinValue, int.MaxValue)]

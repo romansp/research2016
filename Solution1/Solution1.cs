@@ -27,6 +27,17 @@ namespace System
 
 		public Rational Simplify()
 		{
+			if (_denominator < 0)
+			{
+				if (_denominator != int.MinValue && _numerator != int.MinValue)
+				{
+					checked
+					{
+						// move sign to numerator
+						return new Rational(_numerator / _gcd * -1, _denominator / _gcd * -1);
+					}
+				}
+			}
 			return new Rational(_numerator / _gcd, _denominator / _gcd);
 		}
 
@@ -196,7 +207,7 @@ namespace Algorithms
 				b = a % b;
 				a = temp;
 			}
-			return a;
+			return a == int.MinValue ? int.MinValue : Math.Abs(a);
 		}
 
 		/// <summary>
