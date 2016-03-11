@@ -4,11 +4,11 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{FBB0E330-F4C0-4EE8-8CDF-CAAB36588367}</ProjectGuid>
+    <ProjectGuid>{81B251C5-F1DB-497E-B77D-A5F075559DC2}</ProjectGuid>
     <OutputType>Exe</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>PerformanceTests</RootNamespace>
-    <AssemblyName>PerformanceTests</AssemblyName>
+    <RootNamespace>Solution4</RootNamespace>
+    <AssemblyName>Solution4</AssemblyName>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
   </PropertyGroup>
@@ -34,16 +34,8 @@
     <LangVersion>4</LangVersion>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="BenchmarkDotNet, Version=0.9.2.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\BenchmarkDotNet.0.9.2\lib\net45\BenchmarkDotNet.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
-    <Reference Include="Microsoft.Build" />
-    <Reference Include="Microsoft.Build.Framework" />
-    <Reference Include="Microsoft.Build.Utilities.v4.0" />
     <Reference Include="System" />
     <Reference Include="System.Core" />
-    <Reference Include="System.Management" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="Microsoft.CSharp" />
@@ -57,17 +49,6 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
-    <None Include="packages.config" />
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\Solution1\Solution1.csproj">
-      <Project>{7d6607d9-85dd-4d91-9363-4af732580195}</Project>
-      <Name>Solution1</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\Solution3\Solution3.csproj">
-      <Project>{c0e1ec15-c61b-4e22-957e-78f2bb83f37f}</Project>
-      <Name>Solution3</Name>
-    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
