@@ -24,10 +24,10 @@ namespace Solution4
 
 	public static class Engine
 	{
-		private static readonly Dictionary<string, IEnumerable<int>> _queryCache =
+		private static readonly Dictionary<string, IEnumerable<int>> QueryCache =
 			new Dictionary<string, IEnumerable<int>>(StringComparer.OrdinalIgnoreCase);
 
-		private static readonly Dictionary<string, List<int>> _textDictionary =
+		private static readonly Dictionary<string, List<int>> TextDictionary =
 			new Dictionary<string, List<int>>(StringComparer.OrdinalIgnoreCase);
 
 		public static string QueryText(string[] textLines, string[] queries)
@@ -42,10 +42,10 @@ namespace Solution4
 					var word = words[j];
 
 					List<int> wordLineIndexes;
-					if (!_textDictionary.TryGetValue(word, out wordLineIndexes))
+					if (!TextDictionary.TryGetValue(word, out wordLineIndexes))
 					{
 						wordLineIndexes = new List<int> { lineIndex };
-						_textDictionary.Add(word, wordLineIndexes);
+						TextDictionary.Add(word, wordLineIndexes);
 					}
 					else
 					{
@@ -72,6 +72,7 @@ namespace Solution4
 				}
 			}
 
+			// remove single trailing newline
 			return result.ToString().Remove(result.Length - Environment.NewLine.Length, Environment.NewLine.Length);
 		}
 
@@ -95,19 +96,19 @@ namespace Solution4
 		private static IEnumerable<int> RunQuery(string query)
 		{
 			IEnumerable<int> cachedResult;
-			if (_queryCache.TryGetValue(query, out cachedResult))
+			if (QueryCache.TryGetValue(query, out cachedResult))
 			{
 				return cachedResult;
 			}
 			List<int> result;
-			if (_textDictionary.TryGetValue(query, out result))
+			if (TextDictionary.TryGetValue(query, out result))
 			{
-				_queryCache.Add(query, result);
+				QueryCache.Add(query, result);
 				return result;
 			}
 
 			// missed
-			_queryCache.Add(query, Enumerable.Empty<int>());
+			QueryCache.Add(query, Enumerable.Empty<int>());
 			return Enumerable.Empty<int>();
 		}
 
