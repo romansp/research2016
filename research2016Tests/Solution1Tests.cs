@@ -34,6 +34,7 @@ namespace research2016Tests
 		[InlineData(-2, -2, "-2/-2")]
 		[InlineData(0, 1, "0")]
 		[InlineData(42, 1, "42")]
+		[InlineData(100, -1, "100/-1")]
 		public void Rational_ToString_formats(int num, int denom, string formatted)
 		{
 			var rational = new Rational(num, denom);
