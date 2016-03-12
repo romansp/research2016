@@ -68,23 +68,28 @@ namespace Solution4
 			_queries = queries;
 		}
 
-		private static readonly Regex Validator = new Regex(@"^([a-zA-Zа-яА-Я0-9_])+$", RegexOptions.Compiled | RegexOptions.IgnoreCase);
-		private static string ParseWord(string str)
+		private static readonly Regex Parser = new Regex(@"([a-zA-Zа-яА-Я0-9_]+)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+		private static MatchCollection ParseWords(string str)
 		{
-			var wordMatch = Validator.Match(str);
-			return wordMatch.Success ? wordMatch.Groups[0].Value : string.Empty;
+			var wordMatch = Parser.Matches(str);
+			return wordMatch;
 		}
 
 		public IEnumerable<HashSet<int>> Execute()
 		{
-			// prepare text
+			PrepareText();
+			return RunQueries();
+		}
+
+		private void PrepareText()
+		{
 			for (var lineIndex = 0; lineIndex < _textFileLines.Length; lineIndex++)
 			{
 				var line = _textFileLines[lineIndex];
-				var words = line.Split(StringSplits.Space);
-				for (var j = 0; j < words.Length; j++)
+				var words = ParseWords(line);
+				for (var j = 0; j < words.Count; j++)
 				{
-					var word = ParseWord(words[j]);
+					var word = words[j].Value;
 					if (string.IsNullOrEmpty(word))
 					{
 						continue;
@@ -92,7 +97,7 @@ namespace Solution4
 					HashSet<int> wordLineIndexes;
 					if (!_textWordDictionary.TryGetValue(word, out wordLineIndexes))
 					{
-						wordLineIndexes = new HashSet<int> { lineIndex };
+						wordLineIndexes = new HashSet<int> {lineIndex};
 						_textWordDictionary.Add(word, wordLineIndexes);
 					}
 					else
@@ -101,31 +106,23 @@ namespace Solution4
 					}
 				}
 			}
-
-			// run queries
-			return RunQueries();
 		}
 
-	
-		private IEnumerable<HashSet<int>> RunQueries()
+		private List<HashSet<int>> RunQueries()
 		{
+			var result = new List<HashSet<int>>();
 			for (var i = 0; i < _queries.Length; i++)
 			{
 				var query = _queries[i];
-				if (query.Contains(' '))
-				{
-					var words = query.Split(StringSplits.Space);
-					yield return RunMultiwordQuery(words);
-				}
-				else
-				{
-					yield return RunQuery(query);
-				}
+				result.Add(query.Contains(' ') ? RunMultiwordQuery(query) : RunQuery(query));
 			}
+			return result;
 		}
 
 		private HashSet<int> RunQuery(string query)
 		{
+			if (string.IsNullOrEmpty(query))
+				return EmptyIntHashSet;
 			HashSet<int> cachedResult;
 			if (_queryCache.TryGetValue(query, out cachedResult))
 			{
@@ -143,15 +140,18 @@ namespace Solution4
 			return EmptyIntHashSet;
 		}
 
-		private HashSet<int> RunMultiwordQuery(string[] queryWords)
+		private HashSet<int> RunMultiwordQuery(string query)
 		{
+			var queryWords = query.Split(StringSplits.Space);
 			var multiwordQueryResult = new HashSet<int>();
 			for (int i = 0; i < queryWords.Length; i++)
 			{
-				var query = queryWords[i];
+				var queryWord = queryWords[i];
+				if (string.IsNullOrEmpty(queryWord))
+					continue;
 				HashSet<int> cachedResult;
 				HashSet<int> linesWithWord;
-				if (_queryCache.TryGetValue(query, out cachedResult))
+				if (_queryCache.TryGetValue(queryWord, out cachedResult))
 				{
 					if (cachedResult.Any())
 					{
@@ -162,14 +162,14 @@ namespace Solution4
 						return EmptyIntHashSet;
 					}
 				}
-				else if (_textWordDictionary.TryGetValue(query, out linesWithWord))
+				else if (_textWordDictionary.TryGetValue(queryWord, out linesWithWord))
 				{
-					_queryCache.Add(query, linesWithWord);
+					_queryCache.Add(queryWord, linesWithWord);
 				}
 				else
 				{
 					// missed
-					_queryCache.Add(query, EmptyIntHashSet);
+					_queryCache.Add(queryWord, EmptyIntHashSet);
 					return EmptyIntHashSet;
 				}
 

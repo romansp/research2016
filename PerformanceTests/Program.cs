@@ -12,10 +12,10 @@ namespace PerformanceTests
 		}
 
 		//[Benchmark]
-		public void Benchmark3()
-		{
-			Solution3.Program.Main(Enumerable.Empty<string>().ToArray());
-		}
+		//public void Benchmark3()
+		//{
+		//	Solution3.Program.Main(Enumerable.Empty<string>().ToArray());
+		//}
 
 		[Benchmark]
 		public void Benchmark4()
