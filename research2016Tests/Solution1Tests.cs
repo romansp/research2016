@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using Xunit;
 
@@ -201,6 +202,7 @@ namespace research2016Tests
 		[InlineData(679297, 679277, 679279, 679277, false)]
 
 		[InlineData(1, -2, -2, 1, false)]
+		[InlineData(2, 4, -8, -16, true)]
 		public void Rational_comparison_equal(int r1Num, int r1Denom, int r2Num, int r2Denom, bool expected)
 		{
 			var rational1 = new Rational(r1Num, r1Denom);
@@ -263,6 +265,8 @@ namespace research2016Tests
 		[InlineData(679297, 679277, 679279, 679277, false)]
 
 		[InlineData(1, -2, -2, 1, false)]
+		[InlineData(-10, 1, -33, 3, false)]
+		[InlineData(46, 1, -3, -7, false)]
 		public void Rational_comparison_less(int r1Num, int r1Denom, int r2Num, int r2Denom, bool expected)
 		{
 			var rational1 = new Rational(r1Num, r1Denom);
@@ -400,9 +404,21 @@ namespace research2016Tests
 			rationals.Sort();
 			var isOrdered =
 				rationals.Zip(rationals.Skip(1), (previous, current) => new { current, previous })
-					.All(p => (double)p.previous < (double)p.current);
+					.All(p => (double)p.previous <= (double)p.current);
 
 			Assert.True(isOrdered);
+		}
+
+		[Fact]
+		public void Rational_hashing()
+		{
+			var hashSet = new HashSet<Rational>();
+			hashSet.Add(new Rational(1, 2));
+			hashSet.Add(new Rational(2, 4));
+			hashSet.Add(new Rational(-8, -16));
+			hashSet.Add(new Rational(1, 1));
+			hashSet.Add(new Rational(int.MinValue, int.MinValue));
+			Assert.Equal(2, hashSet.Count);
 		}
 	}
 }

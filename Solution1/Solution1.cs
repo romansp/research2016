@@ -1,9 +1,5 @@
-﻿using System;
-
-namespace System
+﻿namespace System
 {
-	using Algorithms;
-
 	public struct Rational : IEquatable<Rational>, IComparable<Rational>, IComparable
 	{
 		private readonly int _numerator;
@@ -18,7 +14,7 @@ namespace System
 
 			_numerator = numerator;
 			_denominator = denominator;
-			_gcd = Algorithms.Gcd(_numerator, _denominator);
+			_gcd = Gcd(_numerator, _denominator);
 			_sign = numerator < 0 && denominator < 0 || numerator > 0 && denominator > 0 ? 1 : -1;
 		}
 
@@ -27,15 +23,16 @@ namespace System
 
 		public Rational Simplify()
 		{
-			if (_denominator < 0)
+			if ((_gcd == -1 || _sign < 0) && (_denominator == int.MinValue || _numerator == int.MinValue))
 			{
-				if (_denominator != int.MinValue && _numerator != int.MinValue)
+				return new Rational(_numerator, _denominator);
+			}
+			if (_denominator < 0 && _sign < 0)
+			{
+				// move sign to numerator
+				checked
 				{
-					checked
-					{
-						// move sign to numerator
-						return new Rational(_numerator / _gcd * -1, _denominator / _gcd * -1);
-					}
+					return new Rational(_numerator / _gcd * -1, _denominator / _gcd * -1);
 				}
 			}
 			return new Rational(_numerator / _gcd, _denominator / _gcd);
@@ -117,7 +114,6 @@ namespace System
 			return r1.CompareTo(r2) <= 0;
 		}
 
-
 		public static explicit operator double(Rational r1)
 		{
 			return (double)r1._numerator / r1._denominator;
@@ -134,15 +130,18 @@ namespace System
 				return 0;
 			checked
 			{
-				if (_sign != other._sign)
-					return _sign;
-				
+				if (_sign < other._sign)
+					return -1;
+
+				if (_sign > other._sign)
+					return 1;
+
 				// store in long type to avoid overflow
 				var left = (long)_numerator * other._denominator;
 				var right = (long)other._numerator * _denominator;
 
-				//if (_sign < 0 && other._sign < 0)
-				//	return right.CompareTo(left); 
+				if (_sign < 0 && other._sign < 0 && left > 0 || _sign > 0 && other._sign > 0 && left < 0)
+					return right.CompareTo(left);
 
 				return left.CompareTo(right);
 			}
@@ -156,12 +155,6 @@ namespace System
 			return CompareTo((Rational)obj);
 		}
 
-		public override bool Equals(object obj)
-		{
-			if (ReferenceEquals(null, obj)) return false;
-			return obj is Rational && Equals((Rational)obj);
-		}
-
 		public bool Equals(Rational other)
 		{
 			if (_numerator == 0)
@@ -170,6 +163,12 @@ namespace System
 			}
 			// compare simplified rationals to avoid overflow
 			return _numerator / _gcd == other._numerator / other._gcd && _denominator / _gcd == other._denominator / other._gcd;
+		}
+
+		public override bool Equals(object obj)
+		{
+			if (ReferenceEquals(null, obj)) return false;
+			return obj is Rational && Equals((Rational)obj);
 		}
 
 		public override int GetHashCode()
@@ -184,15 +183,9 @@ namespace System
 		{
 			if (_numerator == 0) return "0";
 			if (_denominator == 1) return _numerator.ToString();
-			return _numerator.ToString() + "/" + _denominator.ToString();
+			return string.Format("{0}/{1}", _numerator.ToString(), _denominator.ToString());
 		}
-	}
-}
 
-namespace Algorithms
-{
-	public static class Algorithms
-	{
 		/// <summary>
 		/// Finds the greatest common divisor of two int values.
 		/// </summary>
@@ -201,35 +194,15 @@ namespace Algorithms
 		/// <returns></returns>
 		public static int Gcd(int a, int b)
 		{
+			var positive = a < 0 && b > 0 || a > 0 && b < 0;
 			while (b != 0)
 			{
 				var temp = b;
 				b = a % b;
 				a = temp;
 			}
-			return a == int.MinValue ? int.MinValue : Math.Abs(a);
-		}
-
-		/// <summary>
-		/// Finds the least common multiple of two int values.
-		/// </summary>
-		/// <param name="a"></param>
-		/// <param name="b"></param>
-		/// <returns></returns>
-		public static int Lcm(int a, int b)
-		{
-			return a * b / Gcd(a, b);
-		}
-	}
-
-}
-
-namespace research2016
-{
-	class Program
-	{
-		static void Main(string[] args)
-		{
+			if (a == int.MinValue) return a;
+			return positive ? Math.Abs(a) : a;
 		}
 	}
 }
