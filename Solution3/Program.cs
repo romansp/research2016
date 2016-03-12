@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -25,51 +26,6 @@ namespace Solution3
         public static readonly string start_time = "start_time";
         public static readonly string end_time = "end_time";
     }
-
-	public class WareSalesStatsOrder : IEquatable<WareSalesStatsOrder>
-	{
-		public double Mean { get; set; }
-		public int WareId { get; set; }
-		public bool Displayed { get; set; }
-
-		public bool Equals(WareSalesStatsOrder other)
-		{
-			if (ReferenceEquals(null, other)) return false;
-			if (ReferenceEquals(this, other)) return true;
-			return Mean.Equals(other.Mean) && WareId == other.WareId;
-		}
-
-		public override bool Equals(object obj)
-		{
-			if (ReferenceEquals(null, obj)) return false;
-			if (ReferenceEquals(this, obj)) return true;
-			if (obj.GetType() != this.GetType()) return false;
-			return Equals((WareSalesStatsOrder) obj);
-		}
-
-		public override int GetHashCode()
-		{
-			unchecked
-			{
-				return (Mean.GetHashCode()*397) ^ WareId;
-			}
-		}
-
-		private sealed class MeanEqualityComparer : IComparer<WareSalesStatsOrder>
-		{
-			public int Compare(WareSalesStatsOrder x, WareSalesStatsOrder y)
-			{
-				return x.Mean.CompareTo(y.Mean);
-			}
-		}
-
-		private static readonly IComparer<WareSalesStatsOrder> MeanComparerInstance = new MeanEqualityComparer();
-
-		public static IComparer<WareSalesStatsOrder> MeanComparer
-		{
-			get { return MeanComparerInstance; }
-		}
-	}
 
 	public class WareSalesStats
 	{
@@ -139,10 +95,8 @@ namespace Solution3
         private const string ReportHeader = "ware_id,ware_name,mean,deviation,max";
         private const string ReportDataFormat = "{0},{1},{2},{3},{4}";
         private const string DoubleFormat = "0.##0";
-
-		private static readonly SortedSet<WareSalesStatsOrder> SortedSalesData = new SortedSet<WareSalesStatsOrder>(WareSalesStatsOrder.MeanComparer);
-
-		public static void Main(string[] args)
+        
+        public static void Main(string[] args)
         {
             //Generators.GenerateWaresCSV(WaresFile);
 
@@ -159,38 +113,28 @@ namespace Solution3
 	        var reportLines = new StringBuilder();
 	        reportLines.AppendLine(ReportHeader);
 	        var format = ReportDataFormat + Environment.NewLine;
-            foreach (var orderedStats in SortedSalesData.Reverse())
+            foreach (var salesInfo in salesData.OrderByDescending(c => c.Value.Mean))
             {
-	            if (!orderedStats.Displayed)
-	            {
-					orderedStats.Displayed = true;
-					var value = salesData[orderedStats.WareId];
-					reportLines.AppendFormat(format,
-						value.WareId,
-						value.WareName,
-						value.Mean.ToString(DoubleFormat),
-						value.Deviation.ToString(DoubleFormat),
-						value.Max.ToString(DoubleFormat)
-					);
-				}
-	            
+                var value = salesInfo.Value;
+                reportLines.AppendFormat(format,
+                    value.WareId,
+                    value.WareName, 
+                    value.Mean.ToString(DoubleFormat, CultureInfo.InvariantCulture),
+                    value.Deviation.ToString(DoubleFormat, CultureInfo.InvariantCulture),
+                    value.Max.ToString(DoubleFormat, CultureInfo.InvariantCulture)
+                );
             }
             File.WriteAllText(ReportFile, reportLines.ToString());
         }
 
         private static IDictionary<int, WareSalesStats> BuildSalesData(IDictionary<int, string> wares)
         {
-            // todo: producer - consumer pattern
-            // producer: bulk read file lines and place strings into ConcurrentBag
-            // consumer: read files from ConcurrentBag in while(!bag.IsCompleted) loop
-			
             var isHeaderLine = true;
             var wareIdIndex = 1;
             var startTimeIndex = 2;
             var endTimeIndex = 3;
 
 			var salesData = new Dictionary<int, WareSalesStats>();
-			
 
 			foreach (var line in File.ReadLines(DispatchesFile))
 			{
@@ -250,7 +194,6 @@ namespace Solution3
 
 					var timeToProcess = (endTime - startTime).TotalMinutes;
 					wareSalesStats.AddSale(timeToProcess);
-					SortedSalesData.Add(new WareSalesStatsOrder {Mean = wareSalesStats.Mean, WareId = wareId});
 				}
 			}
 			
@@ -260,7 +203,7 @@ namespace Solution3
         private static IDictionary<int, string> LoadWares()
         {
             var waresFileLines = File.ReadAllLines(WaresFile);
-            var headerColumns = waresFileLines[0].Split(StringSplits.Comma, StringSplitOptions.RemoveEmptyEntries);
+            var headerColumns = waresFileLines[0].Split(StringSplits.Comma);
             int wareIdIndex = 0;
             int wareNameIndex = 1;
 
