@@ -76,6 +76,7 @@
   <ItemGroup>
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Solution1Tests.cs" />
+    <Compile Include="Solution2Tests.cs" />
     <Compile Include="Solution3Tests.cs" />
     <Compile Include="Solution4Tests.cs" />
   </ItemGroup>
@@ -83,6 +84,10 @@
     <ProjectReference Include="..\Solution1\Solution1.csproj">
       <Project>{7d6607d9-85dd-4d91-9363-4af732580195}</Project>
       <Name>Solution1</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Solution2\Solution2.csproj">
+      <Project>{565f3dea-ab73-4fac-a857-857b9f8f2732}</Project>
+      <Name>Solution2</Name>
     </ProjectReference>
     <ProjectReference Include="..\Solution3\Solution3.csproj">
       <Project>{c0e1ec15-c61b-4e22-957e-78f2bb83f37f}</Project>
